@@ -10,7 +10,7 @@ function M.setup(user_settings)
   config.setup(user_settings)
 end
 
-function M.switch()
+function M.switch(should_open_in_other_window)
     local current_file = vim.api.nvim_eval('expand("%:p")')
     local path, filename, current_file_extension = utils.split_filename(current_file)
 
@@ -64,9 +64,27 @@ function M.switch()
         if(found_match) then 
             local match = scores[1].path;
             if not utils.switch_to_open_file_if_possible(match) then
-                 -- If the file wasn't open in any window, open it in the current window
-                 utils.log("Match found! Executing command: 'edit " .. match .. "'")
-                 vim.cmd("edit " .. match)
+                 if should_open_in_other_window == true then
+            
+                     vim.cmd [[
+                          function! GotoFreeVerticalSplit() abort
+                            if winnr() == 1 
+                                wincmd l
+                                if winnr() == 1
+                                    vnew
+                                    wincmd l
+                                endif
+                            elseif winnr() != 1
+                                wincmd h
+                            endif
+                        endfunction
+                        command! -nargs=0 GotoFreeVertSplit call GotoFreeVerticalSplit()
+                     ]]
+                     vim.cmd [[ :GotoFreeVertSplit ]]
+                 end
+                     -- If the file wasn't open in any window, open it in the current window
+                     utils.log("Match found! Executing command: 'edit " .. match .. "'")
+                     vim.cmd("edit " .. match)
              else
                  utils.log("Switched to already open file.")
              end
